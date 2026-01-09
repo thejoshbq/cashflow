@@ -5,13 +5,35 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="331139df-6a00-4f69-8791-2331af4a67d8" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/cashflow/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/cashflow/app.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/cashflow/asset_dialogue.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/cashflow/node.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/cashflow/node_dialogue.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/cashflow/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/cashflow/api/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/cashflow/api/v1/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/cashflow/api/v1/asset_routes.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/cashflow/api/v1/budget_routes.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/cashflow/api/v1/node_routes.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/cashflow/core/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/cashflow/core/manager.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/cashflow/main.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/cashflow/models/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/cashflow/models/node.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/cashflow/schemas/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/cashflow/schemas/schemas.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/cashflow/static/index.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/cashflow.desktop" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/cashflow/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/cashflow/__main__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/cashflow/app.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/cashflow/asset_dialogue.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/cashflow/node.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/cashflow/node_dialogue.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/install.sh" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/setup.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/uninstall.sh" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -22,23 +44,29 @@
     <option name="RECENT_TEMPLATES">
       <list>
         <option value="Python Script" />
+        <option value="HTML File" />
       </list>
     </option>
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="ProjectColorInfo"><![CDATA[{
-  "associatedIndex": 7
-}]]></component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 7
+}</component>
   <component name="ProjectId" id="381XKOFnCQEdjKIjMiCQRALy6Rl" />
+  <component name="ProjectLevelVcsManager">
+    <ConfirmationsSetting value="2" id="Add" />
+  </component>
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
+    "DefaultHtmlFileTemplate": "HTML File",
     "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "Python.api.executor": "Run",
     "Python.main.executor": "Run",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
@@ -46,9 +74,16 @@
     "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
     "git-widget-placeholder": "main",
     "junie.onboarding.icon.badge.shown": "true",
+    "last_opened_file_path": "/home/otis-lab/Desktop/cashflow",
     "to.speed.mode.migration.done": "true"
   }
 }]]></component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$" />
+      <recent name="$PROJECT_DIR$/sandbox" />
+    </key>
+  </component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>

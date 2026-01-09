@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Budget Cashflow Visualizer (Web)</title>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; display: flex; flex-direction: column; height: 100vh; }
+        #header { padding: 20px; background: #f0f0f0; text-align: center; flex-shrink: 0; }
+        #main { display: flex; flex: 1; overflow: hidden; min-height: 0; }
+        #controls { width: 400px; padding: 20px; overflow-y: auto; background: #fafafa; border-right: 1px solid #ddd; flex-shrink: 0; }
+        #plots { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 20px; min-width: 0; }
+        
+        /* Give plots appropriate spacing and sizing */
+        #sankey-plot { min-height: 600px; height: auto; margin-bottom: 30px; }
+        #gauge-plot { min-height: 350px; height: auto; margin-bottom: 30px; }
+        #pie-plot { min-height: 450px; height: auto; margin-bottom: 30px; }
+        #projection-plot { min-height: 500px; height: auto; margin-bottom: 30px; }
+        
+        .hidden { display: none; }
+        select, input, button { margin: 5px 0; width: 100%; padding: 8px; box-sizing: border-box; }
+        ul { list-style: none; padding: 0; }
+        li { display: flex; justify-content: space-between; align-items: center; margin: 5px 0; padding: 8px; background: #eee; border-radius: 4px; }
+        #warning { color: red; font-weight: bold; margin-top: 10px; }
+        #summary { margin-top: 10px; padding: 10px; background: #f8f8f8; border: 1px solid #ddd; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div id="header"><h1>Budget Cashflow Visualizer</h1></div>
+    <div id="main">
+        <div id="controls">
+            <div id="start-section">
+                <h3>Start Budget</h3>
+                <input type="number" id="start-income" placeholder="Planned monthly income" min="0.01" step="0.01">
+                <button onclick="startBudget()">Start</button>
+            </div>
+
+            <div id="main-controls" class="hidden">
+                <button onclick="editIncome()">Edit Planned Income</button>
+
+                <h3>Add Node</h3>
+                <select id="add-parent"></select>
+                <input type="text" id="add-label" placeholder="Node name">
+                <input type="number" id="add-amount" placeholder="Monthly flow" min="0.01" step="0.01">
+                <select id="add-group" onchange="toggleSavingsFields()">
+                    <option value="intermediate">Intermediate</option>
+                    <option value="savings">Savings</option>
+                    <option value="expense">Expense</option>
+                    <option value="holding">Holding</option>
+                </select>
+                <div id="savings-fields" class="hidden">
+                    <input type="number" id="add-apr" placeholder="APR (%)" min="0" step="0.01" value="0">
+                    <input type="number" id="add-balance" placeholder="Current balance" min="0" step="0.01" value="0">
+                </div>
+                <button onclick="addNode()">Add Node</button>
+
+                <h3>Current Nodes (Income is root)</h3>
+                <ul id="node-list"></ul>
+
+                <h3>Projection (months)</h3>
+                <input type="number" id="projection-months" min="0" max="240" value="0" onchange="updatePlots()">
+
+                <h3>Standalone Assets</h3>
+                <input type="text" id="asset-name" placeholder="Asset name">
+                <input type="number" id="asset-value" placeholder="Value" min="0" step="0.01">
+                <button onclick="addAsset()">Add Asset</button>
+                <ul id="asset-list"></ul>
+
+                <div id="summary"></div>
+                <div id="warning"></div>
+            </div>
+        </div>
+
+        <div id="plots">
+            <div id="sankey-plot" class="plot-div"></div>
+            <div id="gauge-plot" class="plot-div"></div>
+            <div id="pie-plot" class="plot-div"></div>
+            <div id="projection-plot" class="plot-div hidden"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api/v1';
+
+        async function fetchJSON(path, options = {}) {
+            try {
+                const resp = await fetch(API_BASE + path, options);
+                if (!resp.ok) {
+                    const text = await resp.text();
+                    throw new Error(text || resp.statusText);
+                }
+                return await resp.json();
+            } catch (err) {
+                alert(`API Error: ${err.message}`);
+                console.error(err);
+                throw err;
+            }
+        }
+
+        function toggleSavingsFields() {
+            const group = document.getElementById('add-group').value;
+            document.getElementById('savings-fields').classList.toggle('hidden', group !== 'savings');
+        }
+
+        async function updateNodes() {
+            const nodes = await fetchJSON('/nodes');
+            const select = document.getElementById('add-parent');
+            select.innerHTML = '';
+            nodes.forEach(n => {
+                const opt = document.createElement('option');
+                opt.value = n;
+                opt.text = n;
+                select.appendChild(opt);
+            });
+
+            const list = document.getElementById('node-list');
+            list.innerHTML = '';
+            nodes.forEach(n => {
+                if (n === 'Income') return;
+                const li = document.createElement('li');
+                li.textContent = n;
+                const btns = document.createElement('div');
+                const editBtn = document.createElement('button');
+                editBtn.textContent = 'Edit';
+                editBtn.onclick = () => editNode(n);
+                const remBtn = document.createElement('button');
+                remBtn.textContent = 'Remove';
+                remBtn.onclick = () => removeNode(n);
+                btns.append(editBtn, remBtn);
+                li.appendChild(btns);
+                list.appendChild(li);
+            });
+        }
+
+        async function updateAssets() {
+            const assets = await fetchJSON('/assets');
+            const list = document.getElementById('asset-list');
+            list.innerHTML = '';
+            assets.forEach(a => {
+                const li = document.createElement('li');
+                li.textContent = `${a.name}: $${a.value.toLocaleString()}`;
+                const remBtn = document.createElement('button');
+                remBtn.textContent = 'Remove';
+                remBtn.onclick = () => removeAsset(a.name);
+                li.appendChild(remBtn);
+                list.appendChild(li);
+            });
+        }
+
+        async function updatePlots() {
+            const months = parseInt(document.getElementById('projection-months').value) || 0;
+            const data = await fetchJSON(`/budget/data?projection_months=${months}`);
+
+            const template = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'plotly_dark' : 'plotly';
+
+            // Update plots with responsive sizing
+            Plotly.react('sankey-plot', data.sankey.data, {
+                ...data.sankey.layout, 
+                template,
+                height: 600,
+                autosize: true
+            }, {responsive: true});
+            
+            Plotly.react('gauge-plot', data.gauge.data, {
+                ...data.gauge.layout, 
+                template,
+                height: 350,
+                autosize: true
+            }, {responsive: true});
+            
+            Plotly.react('pie-plot', data.pie.data, {
+                ...data.pie.layout, 
+                template,
+                height: 450,
+                autosize: true
+            }, {responsive: true});
+
+            document.getElementById('summary').innerHTML = data.summary;
+            document.getElementById('warning').textContent = data.warning;
+
+            const projDiv = document.getElementById('projection-plot');
+            if (data.projection && months > 0) {
+                Plotly.react(projDiv, data.projection.data, {
+                    ...data.projection.layout, 
+                    template,
+                    height: 500,
+                    autosize: true
+                }, {responsive: true});
+                projDiv.classList.remove('hidden');
+            } else {
+                projDiv.classList.add('hidden');
+            }
+        }
+
+        async function startBudget() {
+            const income = parseFloat(document.getElementById('start-income').value);
+            if (isNaN(income) || income <= 0) return alert('Enter a valid positive income');
+            await fetchJSON('/budget/start', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({income})
+            });
+            document.getElementById('start-section').classList.add('hidden');
+            document.getElementById('main-controls').classList.remove('hidden');
+            await Promise.all([updateNodes(), updateAssets(), updatePlots()]);
+        }
+
+        async function editIncome() {
+            const current = prompt('Enter new planned monthly income:');
+            if (!current) return;
+            const income = parseFloat(current);
+            if (isNaN(income) || income <= 0) return alert('Valid positive number required');
+            await fetchJSON('/budget/income', {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({income})
+            });
+            await updatePlots();
+        }
+
+        async function addNode() {
+            const req = {
+                parent_label: document.getElementById('add-parent').value,
+                label: document.getElementById('add-label').value.trim(),
+                amount: parseFloat(document.getElementById('add-amount').value),
+                group: document.getElementById('add-group').value,
+            };
+            if (req.group === 'savings') {
+                req.apr = parseFloat(document.getElementById('add-apr').value) || 0;
+                req.current_balance = parseFloat(document.getElementById('add-balance').value) || 0;
+            }
+            if (!req.label || isNaN(req.amount)) return alert('Valid name and amount required');
+            await fetchJSON('/nodes', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(req)
+            });
+            document.getElementById('add-label').value = '';
+            document.getElementById('add-amount').value = '';
+            await Promise.all([updateNodes(), updatePlots()]);
+        }
+
+        async function editNode(label) {
+            // Prompt-based for simplicity (replace with modal in production)
+            const newLabel = prompt('New name (blank to keep):', label);
+            const newAmount = prompt('New monthly flow amount (blank to keep):');
+            const newGroup = prompt('New group (intermediate/savings/expense/holding, blank to keep):');
+            const body = {};
+            if (newLabel && newLabel !== label) body.new_label = newLabel;
+            if (newAmount) body.new_amount = parseFloat(newAmount);
+            if (newGroup) body.new_group = newGroup;
+            if (newGroup === 'savings' || confirm('Is this a savings node? (for APR/balance)')) {
+                const apr = prompt('APR (%):');
+                const bal = prompt('Current balance:');
+                if (apr) body.apr = parseFloat(apr);
+                if (bal) body.current_balance = parseFloat(bal);
+            }
+            if (Object.keys(body).length === 0) return;
+            await fetchJSON(`/nodes/${encodeURIComponent(label)}`, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(body)
+            });
+            await Promise.all([updateNodes(), updatePlots()]);
+        }
+
+        async function removeNode(label) {
+            if (!confirm(`Remove "${label}" and all its subtree?`)) return;
+            await fetchJSON(`/nodes/${encodeURIComponent(label)}`, {method: 'DELETE'});
+            await Promise.all([updateNodes(), updatePlots()]);
+        }
+
+        async function addAsset() {
+            const name = document.getElementById('asset-name').value.trim();
+            const value = parseFloat(document.getElementById('asset-value').value);
+            if (!name || isNaN(value)) return alert('Valid name and value required');
+            await fetchJSON('/assets', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({name, value})
+            });
+            document.getElementById('asset-name').value = '';
+            document.getElementById('asset-value').value = '';
+            await Promise.all([updateAssets(), updatePlots()]);
+        }
+
+        async function removeAsset(name) {
+            if (!confirm(`Remove asset "${name}"?`)) return;
+            await fetchJSON(`/assets/${encodeURIComponent(name)}`, {method: 'DELETE'});
+            await Promise.all([updateAssets(), updatePlots()]);
+        }
+
+        // Initial load
+        (async () => {
+            try {
+                await updatePlots();
+                await Promise.all([updateNodes(), updateAssets()]);
+                document.getElementById('start-section').classList.add('hidden');
+                document.getElementById('main-controls').classList.remove('hidden');
+            } catch (e) {
+                // Not started yet — stay on start section
+                console.log('Budget not started yet');
+            }
+        })();
+    </script>
+</body>
+</html>
