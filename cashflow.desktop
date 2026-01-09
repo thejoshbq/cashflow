@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Cashflow
+Comment=Cashflow Desktop Application
+Exec=/home/otis-lab/Desktop/cashflow/.venv/bin/python /home/otis-lab/Desktop/cashflow/main.py
+Icon=/home/otis-lab/Desktop/cashflow/icon.png
+Terminal=false
+Categories=Office;Finance;
+StartupNotify=true
